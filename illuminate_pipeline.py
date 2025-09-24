@@ -27,6 +27,7 @@ def get_assessment_results(years_data, start_date, end_date_override=None):
     logging.info('\n\n-------------New Illuminate Operations Logging Instance')
     logging.info(f"Available CPUs: {multiprocessing.cpu_count()}")
     logging.info(f"Available RAM: {round(psutil.virtual_memory().total / (1024 ** 3), 2)} GB")
+    logging.info(f'Years Data variable passed in is {years_data}')
 
     access_token, expires_in = get_access_token()
 
@@ -70,11 +71,7 @@ def get_assessment_results(years_data, start_date, end_date_override=None):
             "illuminate/assessment_results_group_23-24.csv",
             "illuminate/assessment_results_group_24-25.csv"
         ],
-        current_df=assessment_results_group,
-        drop_duplicate_columns=[
-            col for col in assessment_results_group.columns
-            if "count" not in col and col.strip().lower() != "standard_no_standard"
-        ]
+        current_df=assessment_results_group
     )
 
     assessment_results_combined = appender.load_and_append(
@@ -83,11 +80,7 @@ def get_assessment_results(years_data, start_date, end_date_override=None):
             "illuminate/assessment_results_combined_23-24.csv",
             "illuminate/assessment_results_combined_24-25.csv"
         ],
-        current_df=assessment_results_combined,
-        drop_duplicate_columns=[
-            col for col in assessment_results_combined.columns
-            if "count" not in col and col.strip().lower() != "standard_no_standard"
-        ]
+        current_df=assessment_results_combined
     )
 
     illuminate_assessment_results = appender.load_and_append(
@@ -96,11 +89,7 @@ def get_assessment_results(years_data, start_date, end_date_override=None):
             "illuminate/illuminate_assessment_results_23-24.csv",
             "illuminate/illuminate_assessment_results_24-25.csv"
         ],
-        current_df=illuminate_assessment_results,
-        drop_duplicate_columns=[
-            col for col in illuminate_assessment_results.columns
-            if "count" not in col and col.strip().lower() != "standard_no_standard"
-        ]
+        current_df=illuminate_assessment_results
     )
 
     logging.info(f'Sending data for {years_data} school year')

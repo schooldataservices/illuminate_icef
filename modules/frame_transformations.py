@@ -8,7 +8,6 @@ import re
 
 
 def add_in_grade_levels(test_results):
-
     # Initialize the BigQuery client
     client = bigquery.Client(project='icef-437920')
 
@@ -23,11 +22,15 @@ def add_in_grade_levels(test_results):
     # Convert the query results to a Pandas DataFrame
     gl_mapping = query_job.result().to_dataframe()
 
+    # Ensure both columns are string type
+    test_results['local_student_id'] = test_results['local_student_id'].astype(str)
+    gl_mapping['local_student_id'] = gl_mapping['local_student_id'].astype(str)
+
     try:
         test_results = pd.merge(test_results, gl_mapping, on='local_student_id', how='left')
     except Exception as e:
         logging.error(f'Unable to merge gl_mapping from BQ due to {e}')
-    return(test_results)
+    return test_results
 
 
 def add_in_unit_col(df):
@@ -47,9 +50,12 @@ def add_in_unit_col(df):
 
     #might need changes eventually
     df['unit'] = df['unit'].replace('Final', 'Final 1')
-    
+
+    #manual insertion as it does not comply with the title scheme properly 9/24/26
+    df.loc[df['title'].str.contains('The Outsiders - Mid-Unit Novel Test') | df['title'].str.contains('LOTF Mid-Novel Test'), 'unit'] = 'Mid-Unit 1'
 
     unit_col_sorting = {'Module 1':  '1',
+                        'Mid-Unit 1': '1',
                         'Module 2' : '2',
                         'Module 3' : '3',
                         'Interim 1' : '4',
@@ -62,6 +68,8 @@ def add_in_unit_col(df):
     df['unit_labels'] = df['unit'].map(unit_col_sorting)
 
     return(df)
+
+
 
 
 
@@ -125,6 +133,9 @@ def add_in_curriculum_col(df):
     df.loc[(df['assessment_id'] == '141506') & (df['grade_levels'] == 9), 'curriculum'] = 'Biology'
     df.loc[(df['assessment_id'] == '141506') & (df['grade_levels'] != 9), 'curriculum'] = 'Anatomy'
 
+    #Added in 9/24/25
+    df.loc[df['assessment_id'].isin(['142819', '143028', '161329']), 'curriculum'] = 'ELA'
+
     return df
 
 
@@ -174,13 +185,35 @@ def apply_manual_changes(test_results_view):
     return test_results_view
 
 
+
+def extract_unit(title: str) -> str:
+    parts = title.split("_")
+    # keep everything between the 2nd and the last part
+    unit_core = "_".join(parts[2:-1])
+    # if last part is CR or MC, append it
+    if parts[-1] in ["CR", "MC"]:
+        unit_core += f"_{parts[-1]}"
+    return unit_core
+
+def add_in_exit_ticket_info(test_results):
+    #Mask for "Exit Ticket" rows
+    mask = test_results["title"].str.contains("Exit Ticket", na=False)
+
+    # Update only those rows
+    test_results.loc[mask, "unit"] = test_results.loc[mask, "title"].apply(extract_unit)
+    test_results.loc[mask, "curriculum"] = "ELA"
+    test_results.loc[mask, "test_type"] = "exit ticket"
+    return test_results
+
+
 def create_test_results_view(test_results):
 
     test_results = add_in_grade_levels(test_results) #subject to be changed to reference BQ view
     test_results = add_in_curriculum_col(test_results)
     test_results = add_in_unit_col(test_results)
     test_results = create_test_type_column(test_results)
-    test_results_view = apply_manual_changes(test_results)
+    test_results = add_in_exit_ticket_info(test_results)
+    # test_results_view = apply_manual_changes(test_results)
 
 
     #Add in proficiency col, re-order results, and change names

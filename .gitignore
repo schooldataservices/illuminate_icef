@@ -7,3 +7,4 @@ misssing_ids.csv
 pipeline_output.log
 venv/
 modules/test_yoy_class.py
+notes.md

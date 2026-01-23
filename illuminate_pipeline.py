@@ -98,39 +98,34 @@ def get_assessment_results(years_data, start_date, end_date_override=None):
     logging.info(f'Sending data for {years_data} school year')
     bucket_name = "illuminatebucket-icefschools-1"
     project_id = "icef-437920"
-    dataset_id = "illuminate"
 
     buckets.send_to_gcs(
         bucket_name=bucket_name,
         save_path="",
         frame=assessment_results_group,
         frame_name="assessment_results_group.csv",
-        project_id=project_id,
-        dataset_id=dataset_id
+        project_id=project_id
     )
     buckets.send_to_gcs(
         bucket_name=bucket_name,
         save_path="",
         frame=assessment_results_combined,
         frame_name="assessment_results_combined.csv",
-        project_id=project_id,
-        dataset_id=dataset_id
+        project_id=project_id
     )
     buckets.send_to_gcs(
         bucket_name=bucket_name,
         save_path="",
         frame=illuminate_assessment_results,
         frame_name="illuminate_assessment_results.csv",
-        project_id=project_id,
-        dataset_id=dataset_id
+        project_id=project_id
     )
     buckets.send_to_gcs(
         bucket_name=bucket_name,
         save_path="",
         frame=assessments_metadata,
         frame_name="assessments_metadata.csv",
-        project_id=project_id,
-        dataset_id=dataset_id
+        project_id=project_id
     )
 
 

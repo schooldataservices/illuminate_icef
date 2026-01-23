@@ -33,6 +33,9 @@ def get_assessment_results(years_data, start_date, end_date_override=None):
 
     assessments_metadata, assessment_id_list = get_all_assessments_metadata(access_token)
     assessment_id_list = list(set(assessment_id_list))
+    if '115538' in assessment_id_list: #Faulty assessment_id that causes issues.
+        assessment_id_list.remove('115538')
+
     logging.info(f'Here is the length of the assessment_id_list variable {len(assessment_id_list)}')
 
     assessment_results_group, log_results_group = parallel_get_assessment_scores_threaded(access_token, assessment_id_list, 'Group', start_date, end_date_override)
@@ -94,11 +97,41 @@ def get_assessment_results(years_data, start_date, end_date_override=None):
 
     logging.info(f'Sending data for {years_data} school year')
     bucket_name = "illuminatebucket-icefschools-1"
+    project_id = "icef-437920"
+    dataset_id = "illuminate"
 
-    buckets.send_to_gcs(bucket_name, "", assessment_results_group, "assessment_results_group.csv")
-    buckets.send_to_gcs(bucket_name, "", assessment_results_combined, "assessment_results_combined.csv")
-    buckets.send_to_gcs(bucket_name, "", illuminate_assessment_results, "illuminate_assessment_results.csv")
-    buckets.send_to_gcs(bucket_name, '', assessments_metadata, 'assessments_metadata.csv')
+    buckets.send_to_gcs(
+        bucket_name=bucket_name,
+        save_path="",
+        frame=assessment_results_group,
+        frame_name="assessment_results_group.csv",
+        project_id=project_id,
+        dataset_id=dataset_id
+    )
+    buckets.send_to_gcs(
+        bucket_name=bucket_name,
+        save_path="",
+        frame=assessment_results_combined,
+        frame_name="assessment_results_combined.csv",
+        project_id=project_id,
+        dataset_id=dataset_id
+    )
+    buckets.send_to_gcs(
+        bucket_name=bucket_name,
+        save_path="",
+        frame=illuminate_assessment_results,
+        frame_name="illuminate_assessment_results.csv",
+        project_id=project_id,
+        dataset_id=dataset_id
+    )
+    buckets.send_to_gcs(
+        bucket_name=bucket_name,
+        save_path="",
+        frame=assessments_metadata,
+        frame_name="assessments_metadata.csv",
+        project_id=project_id,
+        dataset_id=dataset_id
+    )
 
 
 

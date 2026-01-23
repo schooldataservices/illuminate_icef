@@ -11,13 +11,17 @@ def add_in_grade_levels(test_results):
     # Initialize the BigQuery client
     client = bigquery.Client(project='icef-437920')
 
-    # Execute the query
-    query_job = client.query('''
+    query_string = '''
     SELECT DISTINCT 
     CAST(student_number AS STRING) AS local_student_id,
     grade_level AS grade_levels
     FROM `icef-437920.views.student_to_teacher`
-    ''')
+    WHERE year = '25-26'
+    '''
+
+    logging.info(f'Executing BigQuery: {query_string}')
+
+    query_job = client.query(query_string)
 
     # Convert the query results to a Pandas DataFrame
     gl_mapping = query_job.result().to_dataframe()
@@ -94,14 +98,18 @@ def add_in_curriculum_col(df):
 
         #More so Elem Mapping. Less defined
         'IM': 'Math',
-        'Checkpoint': 'Checkpoint',
+        'Checkpoint': 'Math',
         'Science': 'Science',
         'Into Reading': 'ELA',
         'ELA': 'ELA',
+        'APLIT': 'ELA',
         'Math': 'Math',
         'Quantitative': 'Math',
         'Social Studies': 'History',
-        'History': 'History'
+        'History': 'History',
+        'APWH': 'History',
+        'APGOV': 'Government',
+        'HIST': 'History',
     }
 
     # Initialize the Curriculum column with empty strings
@@ -109,7 +117,7 @@ def add_in_curriculum_col(df):
 
     # Loop through the dictionary to populate the Curriculum column
     for keyword, label in curriculum_dict.items():
-        # Use word boundaries only for the 'IM' keyword to match it as a standalone word
+        # Use word boundaries only for the 'IM' and 'Checkpoint' keywords to match them as standalone words
         if keyword == 'IM' or keyword == 'Checkpoint':
             df.loc[df['title'].str.contains(rf'\b{re.escape(keyword)}\b', case=False), 'curriculum'] = label
         else:
@@ -145,8 +153,7 @@ def create_test_type_column(frame):
 
     frame['test_type'] = frame['title'].apply(
         lambda x: 'checkpoint' if 'checkpoint' in str(x).lower()
-        else 'assessment' if 'assessment' in str(x).lower()
-        else 'unknown'
+        else 'assessment' 
     )
     return frame
 
@@ -231,7 +238,15 @@ def create_test_results_view(test_results):
     test_results.loc[test_results['grade'] == 'K', 'grade'] = 0
     #For safe measures
     test_results = test_results.drop_duplicates()
-    
+
+    print(test_results.columns)
+
+    #special request to drop a certain assessment for student 602148 on 11/10/25
+    test_results = test_results[~(
+    (test_results['local_student_id'] == '602148') &
+    (test_results['title'].str.contains('Interim 1', case=False, na=False))
+    )].reset_index(drop=True)
+
     return(test_results)
 
 

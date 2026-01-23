@@ -19,13 +19,8 @@ def get_access_token():
         'grant_type': 'client_credentials',  # Assuming client credentials grant type
     }
 
-    # payload = {
-    # 'client_id': '791BA70ABC81',
-    # 'client_secret': '9da62b59d0778d706923e85133ebca4c8e0993e4',
-    # 'grant_type': 'client_credentials',  # Assuming client credentials grant type
-    # }
 
-    print(f'Here is the client ID, and here is the Client Secert {J_CLIENT_ID}, {J_CLIENT_SECRET}')
+    # print(f'Here is the client ID, and here is the Client Secert {J_CLIENT_ID}, {J_CLIENT_SECRET}')
     
     # Request the access token
     try:

@@ -80,6 +80,9 @@ def add_in_unit_col(df):
 
 #Add in the Curriculum and Unit Columns via string matching from the Assessment Name
 def add_in_curriculum_col(df):
+    # Ensure assessment_id is string type for consistent matching
+    df['assessment_id'] = df['assessment_id'].astype(str)
+    
     curriculum_dict = {
         #Moreso HS mapping
         'Geometry': 'Geometry',
@@ -95,6 +98,19 @@ def add_in_curriculum_col(df):
         'Biology': 'Biology',
         'Physics': 'Physics',
         'Government': 'Government',
+        'Math Lab': 'Math Lab',  # Must come before 'Math' to avoid conflicts
+        'Anatomy': 'Anatomy',
+        'Spanish I': 'Spanish I',
+        'Span1': 'Spanish I',
+        'USH': 'US History',
+        'US History': 'US History',
+        'APUSH': 'US History',
+        'World History': 'World History',
+        'MWH': 'World History',
+        'APLang': 'ELA',
+        'Gov': 'Government',
+        'Chemistry': 'Chemistry',
+        'Biology': 'Biology',
 
         #More so Elem Mapping. Less defined
         'IM': 'Math',
@@ -107,7 +123,7 @@ def add_in_curriculum_col(df):
         'Quantitative': 'Math',
         'Social Studies': 'History',
         'History': 'History',
-        'APWH': 'History',
+        'APWH': 'World History',  # Changed from 'History' to 'World History'
         'APGOV': 'Government',
         'HIST': 'History',
     }
@@ -117,9 +133,15 @@ def add_in_curriculum_col(df):
 
     # Loop through the dictionary to populate the Curriculum column
     for keyword, label in curriculum_dict.items():
-        # Use word boundaries only for the 'IM' and 'Checkpoint' keywords to match them as standalone words
-        if keyword == 'IM' or keyword == 'Checkpoint':
-            df.loc[df['title'].str.contains(rf'\b{re.escape(keyword)}\b', case=False), 'curriculum'] = label
+        # Use word boundaries for keywords that might be substrings of other keywords
+        # This prevents "Math" from matching "Math Lab", etc.
+        if keyword in ['IM', 'Checkpoint', 'Math']:
+            # For "Math", exclude titles that already contain "Math Lab" to prevent overwriting
+            if keyword == 'Math':
+                mask = df['title'].str.contains(rf'\b{re.escape(keyword)}\b', case=False) & ~df['title'].str.contains('Math Lab', case=False)
+                df.loc[mask, 'curriculum'] = label
+            else:
+                df.loc[df['title'].str.contains(rf'\b{re.escape(keyword)}\b', case=False), 'curriculum'] = label
         else:
             df.loc[df['title'].str.contains(keyword, case=False), 'curriculum'] = label
 
@@ -143,6 +165,34 @@ def add_in_curriculum_col(df):
 
     #Added in 9/24/25
     df.loc[df['assessment_id'].isin(['142819', '143028', '161329']), 'curriculum'] = 'ELA'
+
+    # Fix specific assessment_ids with curriculum issues
+    # Math Lab assessments that were incorrectly mapped to Math
+    df.loc[df['assessment_id'].isin(['161423', '161431', '161430', '142801', '161390', '161417']), 'curriculum'] = 'Math Lab'
+    
+    # World History assessment that was incorrectly mapped to History
+    df.loc[df['assessment_id'] == '161334', 'curriculum'] = 'World History'
+    
+    # Missing curriculum assessments
+    df.loc[df['assessment_id'] == '161451', 'curriculum'] = 'US History'
+    df.loc[df['assessment_id'] == '161466', 'curriculum'] = 'Spanish I'
+    df.loc[df['assessment_id'] == '161478', 'curriculum'] = 'Anatomy'
+    df.loc[df['assessment_id'] == '161454', 'curriculum'] = 'ELA'  # APLang
+    df.loc[df['assessment_id'] == '161452', 'curriculum'] = 'Government'  # Gov
+    df.loc[df['assessment_id'] == '161450', 'curriculum'] = 'World History'  # MWH
+    df.loc[df['assessment_id'] == '161418', 'curriculum'] = 'ELA'  # Grade 12 Unit Skills Assessment
+    df.loc[df['assessment_id'] == '161456', 'curriculum'] = 'US History'  # APUSH
+    
+    # Science assessments that need specific curriculum
+    # Grade 10 Science should be Chemistry, Grade 9 Science should be Biology
+    df.loc[df['assessment_id'] == '68b22e718bbeb32951baaddf', 'curriculum'] = 'Chemistry'  # 10th Grade Science
+    df.loc[df['assessment_id'] == '161441', 'curriculum'] = 'Chemistry'  # Grade 10 Science
+    df.loc[df['assessment_id'] == '142815', 'curriculum'] = 'Biology'  # Grade 9 Science
+    df.loc[df['assessment_id'] == '161471', 'curriculum'] = 'Biology'  # Grade 9 Science
+    
+    # Math assessments that should be Geometry or Algebra II based on grade
+    df.loc[df['assessment_id'] == '6917b5dd477a07bb7337dfe8', 'curriculum'] = 'Geometry'  # Grade 10 Math Unit 3
+    df.loc[df['assessment_id'] == '690bc60f9f7d11ef8ccd4ace', 'curriculum'] = 'Algebra II'  # Grade 11 Math Unit 3
 
     return df
 

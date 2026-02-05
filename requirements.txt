@@ -5,3 +5,4 @@ db-dtypes
 google-cloud-secret-manager
 google-cloud-storage
 gcp-utils-sds
+psutil

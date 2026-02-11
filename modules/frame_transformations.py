@@ -71,6 +71,9 @@ def add_in_unit_col(df):
     
     df['unit_labels'] = df['unit'].map(unit_col_sorting)
 
+    # Manual overrides for specific assessments (unit-level logic)
+    df.loc[df['assessment_id'] == '161543', 'unit'] = '5.NF.1'
+    
     return(df)
 
 
@@ -205,6 +208,10 @@ def create_test_type_column(frame):
         lambda x: 'checkpoint' if 'checkpoint' in str(x).lower()
         else 'assessment' 
     )
+
+    # Manual overrides for specific assessments (test_type-level logic)
+    frame.loc[frame['assessment_id'] == '161543', 'test_type'] = 'checkpoint'
+
     return frame
 
 def apply_manual_changes(test_results_view):

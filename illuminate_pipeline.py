@@ -104,28 +104,32 @@ def get_assessment_results(years_data, start_date, end_date_override=None):
         save_path="",
         frame=assessment_results_group,
         frame_name="assessment_results_group.csv",
-        project_id=project_id
+        project_id=project_id,
+        dag_name='illuminate_dag'
     )
     buckets.send_to_gcs(
         bucket_name=bucket_name,
         save_path="",
         frame=assessment_results_combined,
         frame_name="assessment_results_combined.csv",
-        project_id=project_id
+        project_id=project_id,
+        dag_name='illuminate_dag'
     )
     buckets.send_to_gcs(
         bucket_name=bucket_name,
         save_path="",
         frame=illuminate_assessment_results,
         frame_name="illuminate_assessment_results.csv",
-        project_id=project_id
+        project_id=project_id,
+        dag_name='illuminate_dag'
     )
     buckets.send_to_gcs(
         bucket_name=bucket_name,
         save_path="",
         frame=assessments_metadata,
         frame_name="assessments_metadata.csv",
-        project_id=project_id
+        project_id=project_id,
+        dag_name='illuminate_dag'
     )
 
 

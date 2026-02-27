@@ -58,6 +58,23 @@ def add_in_unit_col(df):
     #manual insertion as it does not comply with the title scheme properly 9/24/26
     df.loc[df['title'].str.contains('The Outsiders - Mid-Unit Novel Test') | df['title'].str.contains('LOTF Mid-Novel Test'), 'unit'] = 'Mid-Unit 1'
 
+    # For checkpoints that encode standards/lessons in the title, backfill unit only when still missing
+    missing_unit_mask = df['unit'].isna() | (df['unit'] == '')
+
+    # Pattern 1: "Lesson <number>" e.g. "PLTW Algebra Advantage Checkpoint Lesson 1"
+    df.loc[missing_unit_mask, 'unit'] = df.loc[missing_unit_mask, 'title'].str.extract(
+        r'(Lesson\s+\d+)', expand=False
+    )
+
+    # Recompute mask in case some units were just filled
+    missing_unit_mask = df['unit'].isna() | (df['unit'] == '')
+
+    # Pattern 2: standard code between "Math" and "Checkpoint"
+    # e.g. "Grade 6 Math 6.RP.A.3.b Checkpoint" -> "6.RP.A.3.b"
+    df.loc[missing_unit_mask, 'unit'] = df.loc[missing_unit_mask, 'title'].str.extract(
+        r'Math\s+([0-9A-Za-z\.\-]+)\s+Checkpoint', expand=False
+    )
+
     unit_col_sorting = {'Module 1':  '1',
                         'Mid-Unit 1': '1',
                         'Module 2' : '2',
@@ -192,10 +209,69 @@ def add_in_curriculum_col(df):
     df.loc[df['assessment_id'] == '161441', 'curriculum'] = 'Chemistry'  # Grade 10 Science
     df.loc[df['assessment_id'] == '142815', 'curriculum'] = 'Biology'  # Grade 9 Science
     df.loc[df['assessment_id'] == '161471', 'curriculum'] = 'Biology'  # Grade 9 Science
+    df.loc[df['assessment_id'] == '161556', 'curriculum'] = 'Biology'
     
     # Math assessments that should be Geometry or Algebra II based on grade
     df.loc[df['assessment_id'] == '6917b5dd477a07bb7337dfe8', 'curriculum'] = 'Geometry'  # Grade 10 Math Unit 3
     df.loc[df['assessment_id'] == '690bc60f9f7d11ef8ccd4ace', 'curriculum'] = 'Algebra II'  # Grade 11 Math Unit 3
+
+    # Title-based curriculum rules (current-year API only)
+    # Science: use grade in title + 'Science' to infer subject
+    sci_9_mask = (
+        df['title'].str.contains('Science', case=False, na=False)
+        & (
+            df['title'].str.contains('Grade 9', case=False, na=False)
+            | df['title'].str.contains('9th Grade', case=False, na=False)
+        )
+    )
+    sci_10_mask = (
+        df['title'].str.contains('Science', case=False, na=False)
+        & (
+            df['title'].str.contains('Grade 10', case=False, na=False)
+            | df['title'].str.contains('10th Grade', case=False, na=False)
+        )
+    )
+    sci_12_mask = (
+        (
+            df['title'].str.contains('Science', case=False, na=False)
+            | df['title'].str.contains('Anatomy', case=False, na=False)
+        )
+        & (
+            df['title'].str.contains('Grade 12', case=False, na=False)
+            | df['title'].str.contains('12th Grade', case=False, na=False)
+        )
+    )
+
+    df.loc[sci_9_mask & df['curriculum'].isin(['', 'Science']), 'curriculum'] = 'Biology'
+    df.loc[sci_10_mask & df['curriculum'].isin(['', 'Science']), 'curriculum'] = 'Chemistry'
+    df.loc[sci_12_mask & df['curriculum'].isin(['', 'Science']), 'curriculum'] = 'Anatomy'
+
+    # Math: use grade in title + 'Math' to infer course
+    math_9_mask = (
+        df['title'].str.contains('Math', case=False, na=False)
+        & (
+            df['title'].str.contains('Grade 9', case=False, na=False)
+            | df['title'].str.contains('9th Grade', case=False, na=False)
+        )
+    )
+    math_10_mask = (
+        df['title'].str.contains('Math', case=False, na=False)
+        & (
+            df['title'].str.contains('Grade 10', case=False, na=False)
+            | df['title'].str.contains('10th Grade', case=False, na=False)
+        )
+    )
+    math_11_mask = (
+        df['title'].str.contains('Math', case=False, na=False)
+        & (
+            df['title'].str.contains('Grade 11', case=False, na=False)
+            | df['title'].str.contains('11th Grade', case=False, na=False)
+        )
+    )
+
+    df.loc[math_9_mask & df['curriculum'].isin(['', 'Math']), 'curriculum'] = 'Algebra I'
+    df.loc[math_10_mask & df['curriculum'].isin(['', 'Math']), 'curriculum'] = 'Geometry'
+    df.loc[math_11_mask & df['curriculum'].isin(['', 'Math']), 'curriculum'] = 'Algebra II'
 
     return df
 

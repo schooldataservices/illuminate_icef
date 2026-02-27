@@ -5,8 +5,7 @@ import sys
 from modules.auth import *
 from modules.assessments_endpoints import *
 from modules.frame_transformations import *
-from gcp_utils_sds import buckets
-from gcp_utils_sds import yoy
+from gcp_utils_sds import buckets, yoy, append_assessment_titles
 import multiprocessing
 import psutil
 
@@ -61,6 +60,14 @@ def get_assessment_results(years_data, start_date, end_date_override=None):
     assessment_results_combined['year'] = years_data
     illuminate_assessment_results['year'] = years_data
     logging.info("Assessment results fetched and processed. Now bringing together with prior years")
+
+    #send to curriculum labels table 
+    append_assessment_titles(
+    frame=illuminate_assessment_results,
+    project_id="icef-437920",
+    data_source="illuminate",
+    )
+
 
     appender = yoy.YearlyDataAppender(
         project_id="icef-437920",
